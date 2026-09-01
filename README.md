@@ -12,7 +12,7 @@
 git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.git starrail_role_info
 ```
 
-更新时在 `zhenxun/plugins/starrail_role_info` 目录执行 `git pull --ff-only`。插件依赖同级目录的 `plugin_utils`，请从原 `zhenxun_extensive_plugin` 仓库保留该目录。
+更新时在 `zhenxun/plugins/starrail_role_info` 目录执行 `git pull --ff-only`。
 
 ## 使用
 
@@ -57,6 +57,10 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 * [StarRailRes](https://github.com/Mar-7th/StarRailRes)的数据资源
 
 ## 更新
+
+**2026/9/1**[v1.3.11]
+
+1. 移除金币扣费依赖，并内置资源下载校验工具
 
 **2026/8/28**[v1.3.10]
 
@@ -192,4 +196,3 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 **2023/6/15**[v0.1]
 
 1. 初版
-

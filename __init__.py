@@ -29,7 +29,7 @@ from zhenxun.configs.utils import PluginExtraData
 #from zhenxun.plugins.call import capture
 from zhenxun.utils.enum import PluginType
 
-from ..plugin_utils.auth_utils import gold_cost
+# 金币扣费装饰器已停用
 from .data_source.draw_artifact_card import draw_artifact_card
 from .data_source.damage_cal import get_role_dmg
 from .data_source.draw_recommend_card import gen_artifact_recommend
@@ -73,7 +73,7 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info",
     extra=PluginExtraData(
         author="CRAZYSHIMAKAZE",
-        version="1.3.10",
+        version="1.3.11",
         plugin_type=PluginType.NORMAL,
     ).to_dict(),
 )
@@ -276,7 +276,7 @@ async def _(event: MessageEvent):
 
 
 @artifact_recommend.handle()
-@gold_cost(coin=1, percent=1)
+# @gold_cost(coin=1, percent=1)
 async def _(event: MessageEvent, args: tuple[str, ...] = RegexGroup()):
     msg = args[0].strip(), args[1].strip()
     uid = await get_msg_uid(event)
@@ -310,7 +310,7 @@ async def _(event: MessageEvent, args: tuple[str, ...] = RegexGroup()):
 
 
 @group_artifact_list.handle()
-@gold_cost(coin=1, percent=1)
+# @gold_cost(coin=1, percent=1)
 async def _(event: GroupMessageEvent):
     group_id = event.group_id
     if not os.path.exists(f"{group_info_path}/{group_id}.json"):
@@ -334,7 +334,7 @@ async def _(event: GroupMessageEvent):
 
 
 @artifact_list.handle()
-@gold_cost(coin=1, percent=1)
+# @gold_cost(coin=1, percent=1)
 async def _(event: MessageEvent):
     uid = await get_msg_uid(event)
     if not os.path.exists(f"{player_info_path}/{uid}.json"):
@@ -450,7 +450,7 @@ async def _(event: GroupMessageEvent, args: tuple[str, ...] = RegexGroup()):
 
 
 @role_rank.handle()
-@gold_cost(coin=1, percent=1)
+# @gold_cost(coin=1, percent=1)
 async def _(
     bot: Bot,
     event: GroupMessageEvent,
@@ -556,7 +556,7 @@ async def _(event: MessageEvent):
     await get_char(uid, event)
 
 
-@gold_cost(coin=1, percent=1)
+# @gold_cost(coin=1, percent=1)
 async def gen(event: MessageEvent, uid, role_name, at_user):
     player_info, _ = await get_starrail_info(uid, update_info=False, event=event)
     roles_list = player_info.get_roles_list()
@@ -570,7 +570,7 @@ async def gen(event: MessageEvent, uid, role_name, at_user):
     )
 
 
-@gold_cost(coin=1, percent=1)
+# @gold_cost(coin=1, percent=1)
 async def update(event, uid, group_save):
     if os.path.exists(f"{player_info_path}/{uid}.json"):
         data = load_json(f"{player_info_path}/{uid}.json")

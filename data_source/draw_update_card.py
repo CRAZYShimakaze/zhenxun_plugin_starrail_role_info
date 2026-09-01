@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw
 
 from zhenxun.services.log import logger
 
-from ...plugin_utils.download_utils import DownloadError
+from ..utils.download_utils import DownloadError
 from .draw_role_card import weapon_url
 from ..utils.card_utils import (
     avatar_path,
