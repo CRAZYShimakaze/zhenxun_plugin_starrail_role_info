@@ -4,6 +4,16 @@
 
 展示漫游签证中角色的面板和伤害数据
 
+## 安装与更新
+
+在真寻仓库的 `zhenxun/plugins` 目录下执行：
+
+```bash
+git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.git starrail_role_info
+```
+
+更新时在 `zhenxun/plugins/starrail_role_info` 目录执行 `git pull --ff-only`。插件依赖同级目录的 `plugin_utils`，请从原 `zhenxun_extensive_plugin` 仓库保留该目录。
+
 ## 使用
 
 - 星铁绑定uidXXXX / 绑定星铁uidXXXX / 崩铁绑定uidXXXX / 绑定崩铁uidXXXX

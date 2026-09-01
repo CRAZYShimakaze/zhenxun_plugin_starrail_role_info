@@ -70,6 +70,7 @@ __plugin_meta__ = PluginMetadata(
         遗器榜单
         群遗器榜单
     """.strip(),
+    homepage="https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info",
     extra=PluginExtraData(
         author="CRAZYSHIMAKAZE",
         version="1.3.10",
@@ -659,7 +660,7 @@ def check_uid(uid):
 
 
 async def get_update_info():
-    url = "https://raw.githubusercontent.com/CRAZYShimakaze/zhenxun_extensive_plugin/main/starrail_role_info/README.md"
+    url = "https://raw.githubusercontent.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info/main/README.md"
     try:
         version = await client.get(url, follow_redirects=True)
         version = re.search(r"\*\*\[v\d.\d.\d]((?:.|\n)*?)\*\*", str(version.text))
@@ -670,7 +671,7 @@ async def get_update_info():
 
 
 async def _get_update_message():
-    url = "https://raw.githubusercontent.com/CRAZYShimakaze/zhenxun_extensive_plugin/main/starrail_role_info/__init__.py"
+    url = "https://raw.githubusercontent.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info/main/__init__.py"
     try:
         version = await client.get(url, follow_redirects=True)
         version = re.search(r'version="(\d+\.\d+\.\d+)"', str(version.text))
