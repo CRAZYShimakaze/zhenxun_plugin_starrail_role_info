@@ -48,7 +48,7 @@ from .utils.card_utils import (
 )
 from .utils.image_utils import image_build, load_image
 from .utils.json_utils import get_message_at
-from .utils.rank_utils import collect_role_rank_entries
+from .utils.rank_utils import collect_damage_titles, collect_role_rank_entries
 
 __plugin_meta__ = PluginMetadata(
     name="星铁角色面板",
@@ -73,7 +73,7 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info",
     extra=PluginExtraData(
         author="CRAZYSHIMAKAZE",
-        version="1.3.11",
+        version="1.3.12",
         plugin_type=PluginType.NORMAL,
     ).to_dict(),
 )
@@ -464,9 +464,35 @@ async def _(
     if metric == "伤害" and (
         not damage_index_text or int(damage_index_text) < 1
     ):
+        try:
+            members = await bot.get_group_member_list(group_id=event.group_id)
+            uid_map = load_json(f"{player_info_path}/qq2uid.json")
+        except Exception:
+            return await role_rank.finish(
+                "暂时无法获取伤害项目列表，请稍后重试。", at_sender=False
+            )
+        damage_titles = collect_damage_titles(
+            members,
+            uid_map,
+            player_info_path,
+            role_name,
+            get_role_dmg,
+        )
+        if damage_titles:
+            damage_items = "\n".join(
+                f"{index}. {title}"
+                for index, title in enumerate(damage_titles, start=1)
+            )
+            return await role_rank.finish(
+                f"请指定{role_name}伤害面板中的项目序号，例如："
+                f"{role_name}伤害排行1\n"
+                f"各数字对应的伤害项目：\n{damage_items}",
+                at_sender=False,
+            )
         return await role_rank.finish(
             f"请指定{role_name}伤害面板中的项目序号，例如："
-            f"{role_name}伤害排行3",
+            f"{role_name}伤害排行1\n"
+            "暂未找到该角色的伤害面板，请先让群成员更新面板后重试。",
             at_sender=False,
         )
     if metric == "评分" and damage_index_text:

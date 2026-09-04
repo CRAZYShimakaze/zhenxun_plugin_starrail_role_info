@@ -58,6 +58,10 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 
 ## 更新
 
+**2026/9/4**[v1.3.12]
+
+1. 增加伤害排行缺少项目序号时的动态项目提示
+
 **2026/9/1**[v1.3.11]
 
 1. 移除金币扣费依赖，并内置资源下载校验工具
