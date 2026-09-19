@@ -11,6 +11,7 @@ import httpx
 import nonebot
 from nonebot import Driver, on_command, on_regex
 from nonebot.adapters.onebot.v11 import (
+    ActionFailed,
     Bot,
     GroupMessageEvent,
     Message,
@@ -26,8 +27,10 @@ from nonebot.plugin import PluginMetadata
 from nonebot_plugin_apscheduler import scheduler
 
 from zhenxun.configs.utils import PluginExtraData
+from zhenxun.services.log import logger
 #from zhenxun.plugins.call import capture
 from zhenxun.utils.enum import PluginType
+from zhenxun.utils.exception import is_ambiguous_send_timeout
 
 # 金币扣费装饰器已停用
 from .data_source.draw_artifact_card import draw_artifact_card
@@ -582,6 +585,21 @@ async def _(event: MessageEvent):
     await get_char(uid, event)
 
 
+async def _send_panel(message, *, updated=False):
+    try:
+        return await get_card.send(message, at_sender=False)
+    except ActionFailed as error:
+        if not is_ambiguous_send_timeout(error):
+            raise
+        logger.warning("星铁面板图片发送超时，结果未知，跳过自动重发")
+        prefix = "面板数据已更新，" if updated else "面板已生成，"
+        return await get_card.send(
+            prefix + "但图片发送超时，暂时无法确认是否送达。"
+            "若稍后仍未收到，请发送角色名+面板查询。",
+            at_sender=True,
+        )
+
+
 # @gold_cost(coin=1, percent=1)
 async def gen(event: MessageEvent, uid, role_name, at_user):
     player_info, _ = await get_starrail_info(uid, update_info=False, event=event)
@@ -591,9 +609,7 @@ async def gen(event: MessageEvent, uid, role_name, at_user):
     img, score = await draw_role_card(uid, role_data, player_info, __plugin_version__, only_cal=False)
     msg = "" if at_user else check_role(role_name, event, img, score)
     img = image_build(img=img, quality=100, mode="RGB")
-    return await get_card.send(  # MessageSegment.reply(event.message_id) +
-        msg + img, at_sender=False
-    )
+    return await _send_panel(msg + img)
 
 
 # @gold_cost(coin=1, percent=1)
@@ -617,8 +633,8 @@ async def update(event, uid, group_save):
                 )
     player_info, update_role_list = await get_starrail_info(uid, update_info=True, event=event)
     await check_artifact(event, player_info, update_role_list, uid, group_save)
-    return await get_card.send(  # MessageSegment.reply(event.message_id) +
-        await draw_role_pic(uid, update_role_list, player_info)
+    return await _send_panel(
+        await draw_role_pic(uid, update_role_list, player_info), updated=True
     )
 
 
