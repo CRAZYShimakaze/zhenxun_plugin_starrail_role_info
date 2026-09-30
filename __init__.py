@@ -1,11 +1,11 @@
 import copy
 from datetime import datetime
+import math
 import os
 from pathlib import Path
 import random
 import re
 import shutil
-import time
 
 import httpx
 import nonebot
@@ -73,7 +73,7 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info",
     extra=PluginExtraData(
         author="CRAZYSHIMAKAZE",
-        version="1.3.12",
+        version="1.3.13",
         plugin_type=PluginType.NORMAL,
     ).to_dict(),
 )
@@ -82,7 +82,7 @@ __plugin_version__ = __plugin_meta__.extra.get("version")
 mihomo_url = "https://api.mihomo.me/sr_info/{}"
 enka_url = "https://enka.network/api/hsr/uid/{}"
 headers = {"User-Agent": "Miao-Plugin/3.0"}
-api_url = [mihomo_url, enka_url]
+api_url = [enka_url, mihomo_url]
 my_card = on_command("我的星铁角色", aliases={"我的崩铁角色"}, priority=4, block=True)
 his_card = on_command("他的星铁角色", aliases={"他的崩铁角色"}, priority=4, block=True)
 
@@ -609,11 +609,9 @@ async def update(event, uid, group_save):
 
             # 计算时间差并转换为秒数
             time_difference_seconds = (current_time - given_time).total_seconds()
-            mod_time = os.path.getmtime(f"{player_info_path}/{uid}.json")
-            cd_time = int(time.time() - mod_time)
             if time_difference_seconds < 60:
                 await get_card.finish(  # MessageSegment.reply(event.message_id) +
-                    f"{60 - cd_time}秒后可再次更新!", at_sender=False
+                    f"{max(1, math.ceil(60 - time_difference_seconds))}秒后可再次更新!", at_sender=False
                 )
     player_info, update_role_list = await get_starrail_info(uid, update_info=True, event=event)
     await check_artifact(event, player_info, update_role_list, uid, group_save)
