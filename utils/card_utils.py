@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+import copy
 import datetime
 import os
 
@@ -41,6 +42,93 @@ paths = load_json(path=f"{json_path}/paths.json")
 trans_data = load_json(path=f"{json_path}/property_trans.json")
 
 
+def _artifact_cache_identity(artifact):
+    """Match equipment type and stats independently of source metadata."""
+    required = ("ID", "部位", "所属套装", "等级", "星级")
+    main = artifact.get("主属性")
+    sub_affixes = artifact.get("词条")
+    if (
+        any(artifact.get(key) is None for key in required)
+        or not isinstance(main, dict)
+        or any(main.get(key) is None for key in ("属性名", "属性值"))
+        or not isinstance(sub_affixes, list)
+        or any(
+            not isinstance(sub, dict)
+            or sub.get("属性名") is None
+            or sub.get("属性值") is None
+            for sub in sub_affixes
+        )
+    ):
+        return None
+
+    return (
+        str(artifact["ID"]),
+        artifact["部位"],
+        artifact["所属套装"],
+        artifact["等级"],
+        artifact["星级"],
+        main["属性名"],
+        main["属性值"],
+        tuple(sorted((sub["属性名"], sub["属性值"]) for sub in sub_affixes)),
+    )
+
+
+def _merge_artifact_cache_entry(existing, incoming):
+    merged = copy.deepcopy(existing)
+    for key, value in incoming.items():
+        if key != "词条" and (key not in merged or merged[key] is None):
+            merged[key] = copy.deepcopy(value)
+
+    incoming_subs = incoming.get("词条", [])
+    used = set()
+    for existing_sub in merged.get("词条", []):
+        for index, incoming_sub in enumerate(incoming_subs):
+            if index in used:
+                continue
+            if (existing_sub.get("属性名"), existing_sub.get("属性值")) != (
+                incoming_sub.get("属性名"),
+                incoming_sub.get("属性值"),
+            ):
+                continue
+            for field in ("强化次数", "档位步数"):
+                if field in incoming_sub and existing_sub.get(field) is None:
+                    existing_sub[field] = copy.deepcopy(incoming_sub[field])
+            used.add(index)
+            break
+    return merged
+
+
+def _normalize_artifact_cache(artifact_lists):
+    if not isinstance(artifact_lists, list):
+        return artifact_lists
+
+    normalized_lists = []
+    for artifact_list in artifact_lists:
+        if not isinstance(artifact_list, list):
+            normalized_lists.append(artifact_list)
+            continue
+        normalized = []
+        indexes = {}
+        for artifact in artifact_list:
+            identity = (
+                _artifact_cache_identity(artifact)
+                if isinstance(artifact, dict)
+                else None
+            )
+            if identity is None or identity not in indexes:
+                if identity is not None:
+                    indexes[identity] = len(normalized)
+                normalized.append(artifact)
+                continue
+            index = indexes[identity]
+            normalized[index] = _merge_artifact_cache_entry(normalized[index], artifact)
+        normalized_lists.append(normalized)
+
+    while len(normalized_lists) < 6:
+        normalized_lists.append([])
+    return normalized_lists
+
+
 class PlayerInfo:
     def __init__(self, uid: int):
         self.path = f"{player_info_path}/{uid}.json"
@@ -53,8 +141,9 @@ class PlayerInfo:
             self.data["小毕业遗器"] = 0
         if "大毕业遗器" not in self.data:
             self.data["大毕业遗器"] = 0
-        if "遗器列表" not in self.data:
-            self.data["遗器列表"] = [[], [], [], [], [], []]
+        self.data["遗器列表"] = _normalize_artifact_cache(
+            self.data.get("遗器列表", [[], [], [], [], [], []])
+        )
 
     def set_player(self, data: dict):
         self.player_info["昵称"] = data.get("nickname", "unknown")
@@ -341,6 +430,9 @@ class PlayerInfo:
     def save(self):
         self.data["玩家信息"] = self.player_info
         self.data["角色"] = self.roles
+        self.data["遗器列表"] = _normalize_artifact_cache(
+            self.data.get("遗器列表", [[], [], [], [], [], []])
+        )
         save_json(data=self.data, path=self.path)
 
 

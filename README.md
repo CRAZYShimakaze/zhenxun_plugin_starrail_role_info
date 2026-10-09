@@ -44,7 +44,7 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 ## 伤害计算与数据
 
 - 首次查询或显式更新时按 `enka.network`、`mihomo.me` 顺序获取漫游签证数据，并写入插件目录下的 UID 缓存；普通角色面板查询优先读取已有缓存，`更新/刷新...面板` 才会强制重新获取。
-- 面板伤害计算使用插件内置的固定 Miao-Plugin 星铁规则快照及 Python runtime（revision: `afff386eb6b31bc70a98144c3bbfa884eaf5e621`），读取角色、行迹、星魂、光锥和遗器等缓存字段；不依赖运行时 Node 或外部 Miao-Plugin checkout。
+- 面板伤害计算使用插件内置的固定 Miao-Plugin 星铁规则快照及 Python runtime（revision: `0771a0e827bc51dfb6c8df50d797447e1aae7ba7`），读取角色、行迹、星魂、光锥和遗器等缓存字段；不依赖运行时 Node 或外部 Miao-Plugin checkout。
 - 伤害表列顺序为“暴击伤害”“期望伤害”，`Buff列表` 展示当前默认伤害项目的触发说明。快照没有对应角色规则、缓存字段缺失或规则执行失败时不生成伤害表，也不会进入伤害排行；该规则集不宣称覆盖所有角色和配置。
 - 遗器位置推荐只遍历当前 UID 缓存的对应位置遗器，并按遗器评分取结果；不会从外部实时扫描账号背包。
 
@@ -57,6 +57,14 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 * [StarRailRes](https://github.com/Mar-7th/StarRailRes)的数据资源
 
 ## 更新
+
+**2026/10/5**[Miao-Plugin 快照]
+
+1. 同步基线推进至 Miao-Plugin `0771a0e8`；本次星铁上游变更涉及培养材料、成本标识和真珠图鉴资料，插件使用的伤害规则、倍率、光锥效果及遗器规则未变化，快照计算数据保持不变
+
+**2026/10/2**[Miao-Plugin 快照]
+
+1. 同步真珠治疗计算、欢愉光锥和新增遗器套装规则至 Miao-Plugin `fbabcc0c`
 
 **2026/10/1**[v1.3.13]
 
