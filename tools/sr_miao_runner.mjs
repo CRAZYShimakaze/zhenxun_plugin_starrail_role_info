@@ -13,7 +13,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline'
 
-const REVISION = '0771a0e827bc51dfb6c8df50d797447e1aae7ba7'
+const REVISION = '978c0334c7167978898c970d14e7b9dffe06f4f7'
 const root = process.env.MIAO_PLUGIN_ROOT || '/Users/crazy/PycharmProjects/miao-plugin'
 
 const Format = {

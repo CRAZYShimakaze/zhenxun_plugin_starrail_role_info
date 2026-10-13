@@ -19,7 +19,7 @@ from .sr_miao_models import DamageValues
 from .sr_miao_runtime import calculate_rule_snapshot, load_rule_snapshot
 
 
-MIAO_REVISION = "0771a0e827bc51dfb6c8df50d797447e1aae7ba7"
+MIAO_REVISION = "978c0334c7167978898c970d14e7b9dffe06f4f7"
 
 # Values copied from models/dmg/DmgCalcMeta.js at MIAO_REVISION.  Keeping the
 # table here makes the runtime independent of node_modules while preserving
