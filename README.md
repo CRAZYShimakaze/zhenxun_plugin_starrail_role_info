@@ -58,6 +58,10 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 
 ## 更新
 
+**2026/10/17**[遗器评分]
+
+1. 同步 Miao-Plugin `07d5c8b8` 的实际主词条评分上限修正及 `5bfc5b47` 的单件 70 分限制；保留插件现有 55 分标尺，避免非最优主词条释放高权重副词条后评分超限
+
 **2026/10/12**[Miao-Plugin 快照]
 
 1. 同步穹、星欢愉的名称及星魂技能加级映射，并修正砂金•戏浪欢愉技额外伤害 Lv7/Lv9 倍率；目标角色接口中的技能、行迹和星魂等级映射已正确，无需调整

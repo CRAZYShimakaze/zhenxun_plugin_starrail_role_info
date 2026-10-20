@@ -130,7 +130,26 @@ def get_full_times(effective, artifact, pos_idx):
             if len(times) == 5:
                 break
         # print(times)
-    return sum(times) / 100
+    total = sum(times)
+    if pos_idx >= 2:
+        # 按实际主词条重算上限，避免其释放高权重副词条后评分超限。
+        # 沿用本插件的 55 分标尺与主词条系数。
+        actual_main = artifact["主属性"]["属性名"]
+        if "伤害加成" in actual_main:
+            actual_main = "伤害加成"
+        sub_weights = [
+            value * (0.3 if key in small_property else 1)
+            for key, value in sorted_items
+            if key in sub_grow_max_value and key != actual_main
+        ][:4]
+        actual_max = effective.get(actual_main, 0) * 3 * (
+            0.25 + 0.05 * artifact["等级"]
+        ) + sum(
+            value * (6 if index == 0 else 1)
+            for index, value in enumerate(sub_weights)
+        )
+        total = max(total, actual_max)
+    return total / 100
 
 
 def get_artifact_score(effective, artifact, role_info, pos_idx):
@@ -180,7 +199,7 @@ def get_artifact_score(effective, artifact, role_info, pos_idx):
         print(main_name, effective.get(main_name, 0))
         main_score = effective.get(main_name, 0) / 100 * 3 * (0.25 + 0.05 * artifact["等级"])
 
-    all_score = 55 / times * (sum(sub_score) + main_score)
+    all_score = min(55 / times * (sum(sub_score) + main_score), 70) if times > 0 else 0
     calc_rank_str = (
         "ACE" if all_score > 43.7 else "SSS" if all_score > 37.8 else "SS" if all_score > 33.5 else "S" if all_score > 29.1 else "A" if all_score > 23.3 else "B" if all_score > 17.5 else "C" if all_score > 11.6 else "D"
     )
