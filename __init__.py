@@ -73,7 +73,7 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info",
     extra=PluginExtraData(
         author="CRAZYSHIMAKAZE",
-        version="1.3.14",
+        version="1.3.15",
         plugin_type=PluginType.NORMAL,
     ).to_dict(),
 )

@@ -180,12 +180,32 @@ class PlayerInfo:
                     else f"{role_info['角色ID']}_rank{i + 1}"
                 }
                 role_info["星魂"].append(talent_detail)
-            if data.get("rank", 0) >= 3:
-                data.get("skillTreeList")[0]["level"] += 1
-                data.get("skillTreeList")[1]["level"] += 2
-            if data.get("rank", 0) >= 5:
-                data.get("skillTreeList")[2]["level"] += 2
-                data.get("skillTreeList")[3]["level"] += 2
+            skill_tree_list = data.get("skillTreeList") or []
+            rank = int(data.get("rank", 0))
+            if role_id == "1511":
+                skill_by_point = {
+                    str(item.get("pointId")): item
+                    for item in skill_tree_list
+                    if isinstance(item, Mapping) and item.get("pointId") is not None
+                }
+                upgrades = {
+                    "1511001": (1 if rank >= 3 else 0, 0),
+                    "1511002": (0, 2 if rank >= 5 else 0),
+                    "1511003": (2 if rank >= 3 else 0, 0),
+                    "1511004": (0, 2 if rank >= 5 else 0),
+                    "1511420": (1 if rank >= 3 else 0, 1 if rank >= 5 else 0),
+                }
+                for point_id, (at_three, at_five) in upgrades.items():
+                    if point_id in skill_by_point:
+                        skill = skill_by_point[point_id]
+                        skill["level"] = int(skill.get("level", 0)) + at_three + at_five
+            else:
+                if rank >= 3:
+                    skill_tree_list[0]["level"] += 1
+                    skill_tree_list[1]["level"] += 2
+                if rank >= 5:
+                    skill_tree_list[2]["level"] += 2
+                    skill_tree_list[3]["level"] += 2
 
             prop = {}
             prop["基础生命值"] = self.get_role_value("hp", role_info["角色ID"], role_info["晋升"], role_info["等级"])
@@ -245,34 +265,67 @@ class PlayerInfo:
                         }
                     else:
                         weapon_prop_info = {"属性名": "能量恢复效率", "属性值": 0}
+                if (
+                    weapon_data["tid"] == "23065"
+                    and metadata.get("path") != weapon[weapon_data["tid"]]["path"]
+                ):
+                    weapon_prop_info = {"属性名": "能量恢复效率", "属性值": 0}
                 prop["基础生命值"] += weapon_info["生命值"]
                 prop["基础攻击力"] += weapon_info["攻击力"]
                 prop["基础防御力"] += weapon_info["防御力"]
 
             role_info["光锥"] = weapon_info
 
-            role_info["行迹"] = [
-                {
-                    "名称": "普攻",
-                    "等级": data.get("skillTreeList")[0]["level"],
-                    "图标": f"{role_info['角色ID']}_basic_atk",
-                },
-                {
-                    "名称": "战技",
-                    "等级": data.get("skillTreeList")[1]["level"],
-                    "图标": f"{role_info['角色ID']}_skill",
-                },
-                {
-                    "名称": "终结技",
-                    "等级": data.get("skillTreeList")[2]["level"],
-                    "图标": f"{role_info['角色ID']}_ultimate",
-                },
-                {
-                    "名称": "天赋",
-                    "等级": data.get("skillTreeList")[3]["level"],
-                    "图标": f"{role_info['角色ID']}_talent",
-                },
-            ]
+            if role_id == "1511":
+                skill_levels = {
+                    str(item.get("pointId")): int(item.get("level", 0))
+                    for item in skill_tree_list
+                    if isinstance(item, Mapping) and item.get("pointId") is not None
+                }
+                role_info["行迹"] = [
+                    {"名称": name, "等级": skill_levels.get(point_id, 1), "图标": icon}
+                    for point_id, name, icon in (
+                        ("1511001", "普攻", "1511_basic_atk"),
+                        ("1511002", "战技", "1511_skill"),
+                        ("1511003", "终结技", "1511_ultimate"),
+                        ("1511004", "天赋", "1511_talent"),
+                    )
+                ]
+                if "1511420" in skill_levels:
+                    icon = role_skill["1511420"]["icon"].rsplit("/", 1)[-1].rsplit(".", 1)[0]
+                    role_info["行迹"].append(
+                        {"名称": "欢愉技", "等级": skill_levels["1511420"], "图标": icon}
+                    )
+                role_info["行迹节点"] = [
+                    str(item["pointId"])
+                    for item in skill_tree_list
+                    if isinstance(item, Mapping)
+                    and item.get("pointId") is not None
+                    and int(item.get("level", 0)) > 0
+                ]
+            else:
+                role_info["行迹"] = [
+                    {
+                        "名称": "普攻",
+                        "等级": skill_tree_list[0]["level"],
+                        "图标": f"{role_info['角色ID']}_basic_atk",
+                    },
+                    {
+                        "名称": "战技",
+                        "等级": skill_tree_list[1]["level"],
+                        "图标": f"{role_info['角色ID']}_skill",
+                    },
+                    {
+                        "名称": "终结技",
+                        "等级": skill_tree_list[2]["level"],
+                        "图标": f"{role_info['角色ID']}_ultimate",
+                    },
+                    {
+                        "名称": "天赋",
+                        "等级": skill_tree_list[3]["level"],
+                        "图标": f"{role_info['角色ID']}_talent",
+                    },
+                ]
             skill_prop_list = [{"属性名": "能量恢复效率", "属性值": 0}]
             for item in data.get("skillTreeList"):
                 if skill_prop := role_skill.get(str(item["pointId"]))["levels"][0]["properties"]:

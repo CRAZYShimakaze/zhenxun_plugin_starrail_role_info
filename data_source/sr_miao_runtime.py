@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import math
 import json
 import re
@@ -83,6 +84,76 @@ class _JSUndefined:
 
 
 _JS_UNDEFINED = _JSUndefined()
+
+
+def _aha_number(value: Any) -> float:
+    if isinstance(value, _JSUndefined):
+        return math.nan
+    if value is None:
+        return 0.0
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, str) and not value.strip():
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return math.nan
+
+
+def _aha_positive(value: Any) -> float:
+    number = _aha_number(value)
+    return max(0.0, number) if math.isfinite(number) else 0.0
+
+
+def _aha_is_finite(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    )
+
+
+def _aha_moment_damage(data: Mapping[str, Any], methods: Any) -> dict[str, float]:
+    talent = data["talent"]
+    params = data["params"]
+    hit = methods(talent.xe["欢愉伤害"], "xe", "elation")
+    raw_count = _aha_number(params.enemyCount)
+    count = 1 if not math.isfinite(raw_count) or raw_count == 0 else max(1, min(5, math.trunc(raw_count)))
+    ratio = talent.xe["真实伤害比例"] * (1.25 if data["cons"] >= 4 else 1)
+    other = _aha_positive(params.ahaMomentDamage)
+    raw_average = params.ahaMomentAvgDamage
+    if raw_average is None or isinstance(raw_average, _JSUndefined):
+        raw_average = params.ahaMomentDamage
+    other_average = _aha_positive(raw_average)
+    return {
+        "dmg": hit.dmg + (hit.dmg * count + other) * ratio / count,
+        "avg": hit.avg + (hit.avg * count + other_average) * ratio / count,
+    }
+
+
+def _aha_debt_state(data: Any) -> dict[str, float]:
+    params = data.params
+    max_hp = _aha_positive(params.enemyMaxHp)
+    previous = min(max_hp, _aha_positive(params.ahaPreviousDebt))
+    floor = max_hp * 0.2 if data.cons >= 6 else 0.0
+    occupied = min(
+        max_hp,
+        max(
+            previous,
+            floor,
+            min(max_hp * 0.1, previous + _aha_positive(params.enemyHitHpLoss) * 0.25),
+        ),
+    )
+    remaining_max_hp = max(0.0, max_hp - occupied)
+    hp_after_hit = min(
+        max(0.0, max_hp - previous), _aha_positive(params.enemyHpAfterHit)
+    )
+    return {
+        "occupied": occupied,
+        "remainingMaxHp": remaining_max_hp,
+        "hpLoss": max(0.0, hp_after_hit - remaining_max_hp),
+    }
 
 
 class _NumericView(float):
@@ -1433,6 +1504,10 @@ def compile_js_function(source: str) -> Callable[..., Any]:
         "_js_add": _js_add,
         "_js_nullish": _js_nullish,
         "_JS_UNDEFINED": _JS_UNDEFINED,
+        "positive": _aha_positive,
+        "isFinite": _aha_is_finite,
+        "momentDamage": _aha_moment_damage,
+        "debtState": _aha_debt_state,
         "_LOGGER": _LOGGER,
         "_add_field_dmg": _add_field_dmg,
         "_get_enhanced_basic": _get_enhanced_basic,
@@ -1820,7 +1895,13 @@ def _talent_levels(profile: dict[str, Any]) -> dict[str, int]:
                 continue
             title = str(row.get("名称", row.get("name", "")))
             level = max(1, int(_finite_number(row.get("等级", row.get("level", 1)), 1)))
-            key = "a" if "普攻" in title else "e" if "战技" in title else "q" if "终结" in title else "t"
+            key = (
+                "xe" if "欢愉技" in title else
+                "a" if "普攻" in title else
+                "e" if "战技" in title else
+                "q" if "终结" in title else
+                "t"
+            )
             levels[key] = level
     direct = profile.get("talent", {})
     if isinstance(direct, dict):
@@ -1857,10 +1938,19 @@ def _role_trees(profile: dict[str, Any], character: dict[str, Any]) -> dict[str,
     elif isinstance(raw, list):
         trees.update({str(value): True for value in raw})
 
+    for point_id in tuple(trees):
+        match = re.search(r"1?\d{4}(\d{3})", point_id)
+        if match:
+            trees[match.group(1)] = True
+
     promotion = int(_finite_number(profile.get("晋升", profile.get("promotion", 0))))
     unlocked_by_promotion = {1: 2, 2: 4, 3: 6}
     tree_data = character.get("treeData", {})
-    if isinstance(tree_data, dict):
+    has_explicit_aha_nodes = (
+        str(profile.get("角色ID", character.get("id", ""))) == "1511"
+        and any(key in profile for key in ("行迹节点", "trees", "行迹树"))
+    )
+    if isinstance(tree_data, dict) and not has_explicit_aha_nodes:
         for node in tree_data.values():
             if not isinstance(node, dict) or node.get("type") != "skill":
                 continue
@@ -1982,7 +2072,7 @@ def _build_context(name: str, profile: dict[str, Any], character: dict[str, Any]
     weapon.setdefault("类型", weapon.get("type", ""))
     weapon.setdefault("精炼等级", weapon.get("affix", weapon.get("refine", 1)))
     levels = _talent_levels(profile)
-    if "xe" in character.get("talent", {}):
+    if "xe" in character.get("talent", {}) and "xe" not in levels:
         levels["xe"] = levels.get("a", 1)
     for key in list(character.get("talent", {})):
         match = re.match(r"^(a|e|q|t|xe|me|mt)[123]$", str(key))
@@ -2195,6 +2285,22 @@ def _append_rule_buffs(context: DamageContext, buffs: list[Any]) -> list[str]:
     return messages
 
 
+def _has_aha_elation_level(profile: Mapping[str, Any]) -> bool:
+    direct = profile.get("talent")
+    if isinstance(direct, Mapping) and "xe" in direct:
+        raw_level = direct["xe"].get("level") if isinstance(direct["xe"], Mapping) else direct["xe"]
+        return _finite_number(raw_level) > 0
+    rows = profile.get("行迹", profile.get("talents", []))
+    if not isinstance(rows, list):
+        return False
+    return any(
+        isinstance(row, Mapping)
+        and "欢愉技" in str(row.get("名称", row.get("name", "")))
+        and _finite_number(row.get("等级", row.get("level", 0))) > 0
+        for row in rows
+    )
+
+
 def calculate_rule_snapshot(name: str, profile: dict[str, Any], enemy_level: int = 103) -> dict[str, Any]:
     snapshot = load_rule_snapshot()
     character_entry = snapshot.get("characters", {}).get(name)
@@ -2204,6 +2310,14 @@ def calculate_rule_snapshot(name: str, profile: dict[str, Any], enemy_level: int
     module = _resolve_snapshot_value(character_entry.get("module", {}))
     if not isinstance(character, dict) or not isinstance(module, dict):
         return {"ok": False, "status": "corrupt_rule", "name": name, "revision": snapshot.get("revision", "")}
+    if name == "星神★阿哈" and not _has_aha_elation_level(profile):
+        return {
+            "ok": False,
+            "status": "incomplete_data",
+            "name": name,
+            "revision": snapshot.get("revision", ""),
+            "error": "阿哈缓存缺少欢愉技等级，请更新星铁面板",
+        }
     context = _build_context(name, profile, character, enemy_level)
     context.state["elationBase"] = snapshot.get("elationBase", {})
     weapon_name = str(context.weapon.get("名称", ""))
@@ -2249,7 +2363,7 @@ def calculate_rule_snapshot(name: str, profile: dict[str, Any], enemy_level: int
             continue
         if detail.get("cons") is not None and context.cons < _finite_number(detail.get("cons")):
             continue
-        params = dict(default_params)
+        params = {**default_params, **context.params}
         detail_params = detail.get("params", {})
         if callable(detail_params):
             detail_params = _resolve_callback(detail_params, context)

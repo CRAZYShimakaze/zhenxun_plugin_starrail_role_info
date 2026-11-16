@@ -22,7 +22,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CACHE = PLUGIN_ROOT / "user_data" / "player_info"
 DEFAULT_MIAO_ROOT = Path("/Users/crazy/PycharmProjects/miao-plugin")
 DEFAULT_OUTPUT = Path("/tmp/starrail_miao_damage_audit.json")
-EXPECTED_REVISION = "978c0334c7167978898c970d14e7b9dffe06f4f7"
+EXPECTED_REVISION = "32ba00879a05c76cff84eab3709483daf123ac89"
 
 
 def _load_damage_module():

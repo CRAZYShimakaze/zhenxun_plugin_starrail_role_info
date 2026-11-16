@@ -252,25 +252,27 @@ async def draw_role_card(uid, data, player_info, plugin_version, only_cal):
         base_icon = load_image(f"{outline_path}/图标_{data['元素']}.png", mode="RGBA")
 
         base_icon_grey = load_image(f"{outline_path}/图标_灰.png", mode="RGBA")
-        for i in range(4):
-            bg.alpha_composite(base_icon.resize((83, 90)), (565 + 117 * i, 253 + 495))
+        skill_rows = data["行迹"]
+        skill_spacing = 93 if len(skill_rows) > 4 else 117
+        for i, skill in enumerate(skill_rows):
+            bg.alpha_composite(base_icon.resize((83, 90)), (565 + skill_spacing * i, 253 + 495))
             draw_center_text(
                 bg_draw,
-                str(data["行迹"][i]["等级"]),
-                525 + 117 * i,
-                567 + 117 * i,
+                str(skill["等级"]),
+                525 + skill_spacing * i,
+                567 + skill_spacing * i,
                 310 + 470,
                 "white",
                 get_font(34, "number.ttf"),
             )
-            skill_icon = f"{skill_path}/{data['行迹'][i]['图标']}.png"
+            skill_icon = f"{skill_path}/{skill['图标']}.png"
             skill_icon = await get_img(
-                url=skill_url.format(data["行迹"][i]["图标"]),
+                url=skill_url.format(skill["图标"]),
                 size=(36, 36),
                 save_path=skill_icon,
                 mode="RGBA",
             )
-            bg.alpha_composite(skill_icon, (589 + 117 * i, 776))
+            bg.alpha_composite(skill_icon, (589 + skill_spacing * i, 776))
 
         # 命座
         lock = load_image(f"{other_path}/锁.png", mode="RGBA", size=(45, 45))

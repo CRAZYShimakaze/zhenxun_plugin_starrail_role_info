@@ -13,7 +13,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline'
 
-const REVISION = '978c0334c7167978898c970d14e7b9dffe06f4f7'
+const REVISION = '32ba00879a05c76cff84eab3709483daf123ac89'
 const root = process.env.MIAO_PLUGIN_ROOT || '/Users/crazy/PycharmProjects/miao-plugin'
 
 const Format = {
@@ -386,6 +386,7 @@ function evaluateModule (file, defaultOnly = false) {
   const source = fs.readFileSync(file, 'utf8')
     .replace(/^\s*import[^\n]*\n/gm, '')
     .replace(/export\s+const\s+/g, 'const ')
+    .replace(/export\s+function\s+/g, 'function ')
     .replace(/export\s+default\s+/g, 'const __default = ')
   const exports = ['details', 'buffs', 'defParams', 'defDmgIdx', 'defDmgKey', 'mainAttr', 'enemyName', 'createdBy']
   const tail = defaultOnly ? 'return { default: typeof __default === "undefined" ? undefined : __default }' : `return { ${exports.map(key => `${key}: typeof ${key} === 'undefined' ? undefined : ${key}`).join(', ')} }`
@@ -560,7 +561,7 @@ function talentFor (profile, charData) {
   for (const row of profile.talents || profile['行迹'] || []) {
     const title = String(row.name || row['名称'] || '')
     const level = Number(row.level || row['等级'] || 1)
-    const key = title.includes('普攻') ? 'a' : title.includes('战技') ? 'e' : title.includes('终结') ? 'q' : 't'
+    const key = title.includes('欢愉技') ? 'xe' : title.includes('普攻') ? 'a' : title.includes('战技') ? 'e' : title.includes('终结') ? 'q' : 't'
     levels[key] = level
   }
   for (const [key, value] of Object.entries(profile.talent || {})) {
@@ -613,6 +614,10 @@ function main (input) {
     for (const [id, enabled] of Object.entries(treeInput)) {
       if (enabled) trees[String(id)] = true
     }
+  }
+  for (const id of Object.keys(trees)) {
+    const match = /1?\d{4}(\d{3})/.exec(id)
+    if (match) trees[match[1]] = true
   }
   const promotion = number(profile.promotion, number(profile['晋升'], 0))
   const promotionRequirements = { 1: 2, 2: 4, 3: 6 }

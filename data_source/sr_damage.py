@@ -19,7 +19,7 @@ from .sr_miao_models import DamageValues
 from .sr_miao_runtime import calculate_rule_snapshot, load_rule_snapshot
 
 
-MIAO_REVISION = "978c0334c7167978898c970d14e7b9dffe06f4f7"
+MIAO_REVISION = "32ba00879a05c76cff84eab3709483daf123ac89"
 
 # Values copied from models/dmg/DmgCalcMeta.js at MIAO_REVISION.  Keeping the
 # table here makes the runtime independent of node_modules while preserving
@@ -493,6 +493,8 @@ def _role_properties(role: Mapping[str, object]) -> Mapping[str, object] | None:
 def _runner_failure_status(status: object) -> str:
     if status == "no_rule":
         return "no_rule"
+    if status == "incomplete_data":
+        return "incomplete_data"
     if status == "corrupt_cache":
         return "corrupt_cache"
     return "rule_failed"
@@ -501,9 +503,8 @@ def _runner_failure_status(status: object) -> str:
 def get_role_dmg_status(data: Mapping[str, object]) -> dict[str, Any]:
     """Run the pinned Miao SR rule and return an auditable result envelope.
 
-    Status values are deliberately machine-readable: ``success``,
-    ``rule_failed``, ``no_rule``, ``name_normalization_failed``, and
-    ``corrupt_cache``.  The cache and Miao checkout are read-only inputs.
+    Status values are deliberately machine-readable, including
+    ``incomplete_data`` when a character's required skill level is absent.
     """
     if not isinstance(data, Mapping):
         return {"status": "corrupt_cache", "error": "角色缓存不是对象"}

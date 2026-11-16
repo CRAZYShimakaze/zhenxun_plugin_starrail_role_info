@@ -44,8 +44,9 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 ## 伤害计算与数据
 
 - 首次查询或显式更新时按 `enka.network`、`mihomo.me` 顺序获取漫游签证数据，并写入插件目录下的 UID 缓存；普通角色面板查询优先读取已有缓存，`更新/刷新...面板` 才会强制重新获取。
-- 面板伤害计算使用插件内置的固定 Miao-Plugin 星铁规则快照及 Python runtime（revision: `978c0334c7167978898c970d14e7b9dffe06f4f7`），读取角色、行迹、星魂、光锥和遗器等缓存字段；不依赖运行时 Node 或外部 Miao-Plugin checkout。
+- 面板伤害计算使用插件内置的固定 Miao-Plugin 星铁规则快照及 Python runtime（revision: `32ba00879a05c76cff84eab3709483daf123ac89`），读取角色、行迹、星魂、光锥和遗器等缓存字段；不依赖运行时 Node 或外部 Miao-Plugin checkout。
 - 伤害表列顺序为“暴击伤害”“期望伤害”，`Buff列表` 展示当前默认伤害项目的触发说明。快照没有对应角色规则、缓存字段缺失或规则执行失败时不生成伤害表，也不会进入伤害排行；该规则集不宣称覆盖所有角色和配置。
+- 阿哈缓存需含“欢愉技”等级；旧缓存缺少该字段时不会生成伤害表，执行 `更新星铁面板` 后再查询。
 - 遗器位置推荐只遍历当前 UID 缓存的对应位置遗器，并按遗器评分取结果；不会从外部实时扫描账号背包。
 
 ## 效果图
@@ -57,6 +58,16 @@ git clone https://github.com/CRAZYShimakaze/zhenxun_plugin_starrail_role_info.gi
 * [StarRailRes](https://github.com/Mar-7th/StarRailRes)的数据资源
 
 ## 更新
+
+**2026/11/16**[v1.3.15]
+
+1. 同步阿哈及欢愉相关伤害、光锥、遗器与评分规则
+2. 修正欢愉技和行迹节点解析，补齐五技能面板显示及旧缓存提示
+
+**2026/11/13**[Miao-Plugin 星铁规则同步]
+
+1. 同步 4.7 阿哈伤害计算、欢愉光锥及“神的瞬息欢愉”“亚空异容所”套装规则
+2. 阿哈伤害改为读取欢愉技等级和实际解锁的行迹节点；旧缓存需更新
 
 **2026/11/12**[v1.3.14]
 
